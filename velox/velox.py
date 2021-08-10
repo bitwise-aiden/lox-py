@@ -1,6 +1,8 @@
 import sys
 
+from ast_printer import AstPrinter
 from error_reporter import ErrorReporter
+from velox_parser import Parser
 from scanner import Scanner
 
 
@@ -38,8 +40,13 @@ class Velox:
         scanner = Scanner(source)
         tokens = scanner.scan_tokens()
 
-        for token in tokens:
-            print(token)
+        parser = Parser(tokens)
+        expression = parser.parse()
+
+        if ErrorReporter.had_error:
+            return
+
+        print(AstPrinter().print(expression))
 
 
 if __name__ == '__main__':

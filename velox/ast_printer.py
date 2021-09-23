@@ -1,18 +1,19 @@
 from expr import *
-from token import Token
-from token_type import TokenType
 
 
 class AstPrinter(Visitor[str]):
     # Public methods
 
-    def print(self, expr: Expr) -> str:
+    def print(
+        self,
+        expr: Expr,
+    ) -> str:
         return expr.accept(self)
 
 
     def visit_ExprBinary(
         self,
-        expr: ExprBinary
+        expr: ExprBinary,
     ) -> str:
         return self.__parenthesize(
             expr.operator.lexeme,
@@ -23,7 +24,7 @@ class AstPrinter(Visitor[str]):
 
     def visit_ExprGrouping(
         self,
-        expr: ExprGrouping
+        expr: ExprGrouping,
     ) -> str:
         return self.__parenthesize(
             'group',
@@ -33,7 +34,7 @@ class AstPrinter(Visitor[str]):
 
     def visit_ExprLiteral(
         self,
-        expr: ExprLiteral
+        expr: ExprLiteral,
     ) -> str:
         if expr.value == None:
             return 'nil'
@@ -43,7 +44,7 @@ class AstPrinter(Visitor[str]):
 
     def visit_ExprUnary(
         self,
-        expr: ExprUnary
+        expr: ExprUnary,
     ) -> str:
         return self.__parenthesize(
             expr.operator.lexeme,
@@ -52,7 +53,12 @@ class AstPrinter(Visitor[str]):
 
 
     # Private methods
-    def __parenthesize(self, name: str, *exprs: list[Expr]) -> str:
+
+    def __parenthesize(
+        self,
+        name: str,
+        *exprs: list[Expr],
+    ) -> str:
         exprs = [
             expr.accept(self)
             for expr in exprs

@@ -7,11 +7,17 @@ T = TypeVar('T')
 
 
 class Expr:
-    def accept(visitor: ForwardRef("Visitor[T]")) -> T:
+    # Public methods
+
+    def accept(
+        visitor: ForwardRef('Visitor[T]'),
+    ) -> T:
         pass
 
 
 class ExprBinary(Expr):
+    # Lifecycle methods
+
     def __init__(
         self,
         left: Expr,
@@ -23,11 +29,18 @@ class ExprBinary(Expr):
         self.right = right
 
 
-    def accept(self, visitor: ForwardRef("Visitor[T]")) -> T:
+    # Public methods
+
+    def accept(
+        self,
+        visitor: ForwardRef('Visitor[T]'),
+    ) -> T:
         return visitor.visit_ExprBinary(self)
 
 
 class ExprGrouping(Expr):
+    # Lifecycle methods
+
     def __init__(
         self,
         expression: Expr,
@@ -35,11 +48,18 @@ class ExprGrouping(Expr):
         self.expression = expression
 
 
-    def accept(self, visitor: ForwardRef("Visitor[T]")) -> T:
+    # Public methods
+
+    def accept(
+        self,
+        visitor: ForwardRef('Visitor[T]'),
+    ) -> T:
         return visitor.visit_ExprGrouping(self)
 
 
 class ExprLiteral(Expr):
+    # Lifecycle methods
+
     def __init__(
         self,
         value: Any,
@@ -47,11 +67,18 @@ class ExprLiteral(Expr):
         self.value = value
 
 
-    def accept(self, visitor: ForwardRef("Visitor[T]")) -> T:
+    # Public methods
+
+    def accept(
+        self,
+        visitor: ForwardRef('Visitor[T]'),
+    ) -> T:
         return visitor.visit_ExprLiteral(self)
 
 
 class ExprUnary(Expr):
+    # Lifecycle methods
+
     def __init__(
         self,
         operator: Token,
@@ -61,36 +88,41 @@ class ExprUnary(Expr):
         self.right = right
 
 
-    def accept(self, visitor: ForwardRef("Visitor[T]")) -> T:
+    # Public methods
+
+    def accept(
+        self,
+        visitor: ForwardRef('Visitor[T]'),
+    ) -> T:
         return visitor.visit_ExprUnary(self)
 
 
 class Visitor(Generic[T]):
+    # Public methods
+
     def visit_ExprBinary(
         self,
-        expr: ExprBinary
+        expr: ExprBinary,
     ) -> T:
         pass
 
 
     def visit_ExprGrouping(
         self,
-        expr: ExprGrouping
+        expr: ExprGrouping,
     ) -> T:
         pass
 
 
     def visit_ExprLiteral(
         self,
-        expr: ExprLiteral
+        expr: ExprLiteral,
     ) -> T:
         pass
 
 
     def visit_ExprUnary(
         self,
-        expr: ExprUnary
+        expr: ExprUnary,
     ) -> T:
         pass
-
-

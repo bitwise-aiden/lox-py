@@ -26,7 +26,12 @@ class Scanner:
     }
 
 
-    def __init__(self, source) -> None:
+    # Lifecylce methods
+
+    def __init__(
+        self,
+        source: str
+    ) -> None:
         self.__source = source
         self.__start = 0
         self.__current = 0
@@ -36,24 +41,32 @@ class Scanner:
 
     # Public methods
 
-    def scan_tokens(self) -> list[Token]:
+    def scan_tokens(
+        self,
+    ) -> list[Token]:
         while not self.__is_at_end():
             self.__start = self.__current
             self.__scan_token()
 
-        self.__tokens.append(Token(TokenType.EOF, "", None, self.__line))
+        self.__tokens.append(Token(TokenType.EOF, '', None, self.__line))
 
         return self.__tokens
 
 
     # Private methods
 
-    def __add_token(self, type: TokenType, literal: Any = None) -> None:
+    def __add_token(
+        self,
+        type: TokenType,
+        literal: Any = None,
+    ) -> None:
         text = self.__source[self.__start: self.__current]
         self.__tokens.append(Token(type, text, literal, self.__line))
 
 
-    def __advance(self) -> str:
+    def __advance(
+        self,
+    ) -> str:
         c = self.__source[self.__current]
 
         self.__current += 1
@@ -61,7 +74,10 @@ class Scanner:
         return c
 
 
-    def __match(self, expected: str) -> bool:
+    def __match(
+        self,
+        expected: str,
+    ) -> bool:
         if self.__is_at_end():
             return False
 
@@ -73,7 +89,9 @@ class Scanner:
         return True
 
 
-    def __identifier(self) -> None:
+    def __identifier(
+        self,
+    ) -> None:
         while self.__is_alpha_numeric(self.__peek()):
             self.__advance()
 
@@ -84,23 +102,36 @@ class Scanner:
         self.__add_token(token_type)
 
 
-    def __is_alpha(self, c: str) -> bool:
+    def __is_alpha(
+        self,
+        c: str,
+    ) -> bool:
         return 'a' <= c <= 'z' or 'A' <= c <= 'Z' or c == '_'
 
 
-    def __is_alpha_numeric(self, c: str) -> bool:
+    def __is_alpha_numeric(
+        self,
+        c: str,
+    ) -> bool:
         return self.__is_alpha(c) or self.__is_digit(c)
 
 
-    def __is_at_end(self) -> bool:
+    def __is_at_end(
+        self,
+    ) -> bool:
         return self.__current >= len(self.__source)
 
 
-    def __is_digit(self, c: str) -> bool:
+    def __is_digit(
+        self,
+        c: str,
+    ) -> bool:
         return '0' <= c <= '9'
 
 
-    def __number(self) -> None:
+    def __number(
+        self,
+    ) -> None:
         while self.__is_digit(self.__peek()):
             self.__advance()
 
@@ -115,21 +146,27 @@ class Scanner:
         self.__add_token(TokenType.NUMBER, value)
 
 
-    def __peek(self) -> str:
+    def __peek(
+        self,
+    ) -> str:
         if self.__is_at_end():
             return '\0'
 
         return self.__source[self.__current]
 
 
-    def __peek_next(self) -> str:
+    def __peek_next(
+        self,
+    ) -> str:
         if self.__current + 1 > len(self.__source):
             return '\0'
 
         return self.__source[self.__current]
 
 
-    def __scan_token(self) -> None:
+    def __scan_token(
+        self,
+    ) -> None:
         c = self.__advance()
 
         if c == '(':
@@ -193,10 +230,12 @@ class Scanner:
         elif self.__is_alpha(c):
             self.__identifier()
         else:
-            ErrorReporter.error(self.__line, "Unexpected character.")
+            ErrorReporter.error(self.__line, 'Unexpected character.')
 
 
-    def __string(self) -> None:
+    def __string(
+        self,
+    ) -> None:
         while self.__peek() != '"' and not self.__is_at_end():
             if self.__peek() == '\n':
                 self.__line += 1
@@ -204,7 +243,7 @@ class Scanner:
             self.__advance()
 
         if self.__is_at_end():
-            ErrorReporter.error(self.__line, "Unterminated string.")
+            ErrorReporter.error(self.__line, 'Unterminated string.')
 
         self.__advance()
 

@@ -8,9 +8,11 @@ from token_type import TokenType
 
 
 class Interpreter(Visitor[Any]):
+    # Public methods
+
     def interpret(
         self,
-        expression: Expr
+        expression: Expr,
     ) -> None:
         try:
             value = self.__evaluate(expression)
@@ -21,7 +23,7 @@ class Interpreter(Visitor[Any]):
 
     def visit_ExprBinary(
         self,
-        expr: ExprBinary
+        expr: ExprBinary,
     ) -> Any:
         left = self.__evaluate(expr.left)
         right = self.__evaluate(expr.right)
@@ -29,37 +31,47 @@ class Interpreter(Visitor[Any]):
         if expr.operator.type == TokenType.MINUS:
             self.__check_number_operands(expr.operator, left, right)
             return float(left) - float(right)
-        elif expr.operator.type == TokenType.SLASH:
+
+        if expr.operator.type == TokenType.SLASH:
             self.__check_number_operands(expr.operator, left, right)
             return float(left) / float(right)
-        elif expr.operator.type == TokenType.STAR:
+
+        if expr.operator.type == TokenType.STAR:
             self.__check_number_operands(expr.operator, left, right)
             return float(left) * float(right)
-        elif expr.operator.type == TokenType.PLUS:
-            if type(left) == type(right) == float:
+
+        if expr.operator.type == TokenType.PLUS:
+            if isinstance(left, float) and isinstance(right, float):
                 return float(left) + float(right)
-            elif type(left) == type(right) == str:
+
+            if isinstance(left, str) and isinstance(right, str):
                 return str(left) + str(right)
 
             raise RuntimeError(
                 expr.operator,
-                "Operands must be two numbers or two strings.",
+                'Operands must be two numbers or two strings.',
             )
-        elif expr.operator.type == TokenType.GREATER:
+
+        if expr.operator.type == TokenType.GREATER:
             self.__check_number_operands(expr.operator, left, right)
             return float(left) > float(right)
-        elif expr.operator.type == TokenType.GREATER_EQUAL:
+
+        if expr.operator.type == TokenType.GREATER_EQUAL:
             self.__check_number_operands(expr.operator, left, right)
             return float(left) >= float(right)
-        elif expr.operator.type == TokenType.LESS:
+
+        if expr.operator.type == TokenType.LESS:
             self.__check_number_operands(expr.operator, left, right)
             return float(left) < float(right)
-        elif expr.operator.type == TokenType.LESS_EQUAL:
+
+        if expr.operator.type == TokenType.LESS_EQUAL:
             self.__check_number_operands(expr.operator, left, right)
             return float(left) <= float(right)
-        elif expr.operator.type == TokenType.BANG_EQUAL:
+
+        if expr.operator.type == TokenType.BANG_EQUAL:
             return not self.__is_equal(left, right)
-        elif expr.operator.type == TokenType.EQUAL_EQUAL:
+
+        if expr.operator.type == TokenType.EQUAL_EQUAL:
             return self.__is_equal(left, right)
 
         return None
@@ -67,7 +79,7 @@ class Interpreter(Visitor[Any]):
 
     def visit_ExprGrouping(
         self,
-        expr: ExprGrouping
+        expr: ExprGrouping,
     ) -> Any:
         return self.__evaluate(
             expr.expression,
@@ -76,21 +88,22 @@ class Interpreter(Visitor[Any]):
 
     def visit_ExprLiteral(
         self,
-        expr: ExprLiteral
+        expr: ExprLiteral,
     ) -> Any:
         return expr.value
 
 
     def visit_ExprUnary(
         self,
-        expr: ExprUnary
+        expr: ExprUnary,
     ) -> Any:
         right = self.__evaluate(expr.right)
 
         if expr.operator.type == TokenType.MINUS:
             self.__check_number_operand(expr.operator, right)
             return -float(right)
-        elif expr.operator.type == TokenType.BANG:
+
+        if expr.operator.type == TokenType.BANG:
             return not self.__is_truthy(right)
 
         return None
@@ -101,29 +114,29 @@ class Interpreter(Visitor[Any]):
     def __check_number_operand(
         self,
         operator: Token,
-        operand: Any
+        operand: Any,
     ) -> None:
-        if type(operand) == float:
+        if isinstance(operand, float):
             return
 
-        raise RuntimeError(operator, "Operand must be a number.")
+        raise RuntimeError(operator, 'Operand must be a number.')
 
 
     def __check_number_operands(
         self,
         operator: Token,
         left: Any,
-        right: Any
+        right: Any,
     ) -> None:
-        if type(left) == type(right) == float:
+        if isinstance(left, float) and isinstance(right, float):
             return
 
-        raise RuntimeError(operator, "Operands must be a numbers.")
+        raise RuntimeError(operator, 'Operands must be a numbers.')
 
 
     def __evaluate(
         self,
-        expr: Expr
+        expr: Expr,
     ) -> Any:
         return expr.accept(self)
 
@@ -138,11 +151,12 @@ class Interpreter(Visitor[Any]):
 
     def __is_truthy(
         self,
-        obj: Any
+        obj: Any,
     ) -> bool:
         if obj == None:
             return False
-        elif type(obj) == bool:
+
+        if isinstance(obj, bool):
             return bool(obj)
 
         return True
@@ -150,22 +164,23 @@ class Interpreter(Visitor[Any]):
 
     def __stringify(
         self,
-        obj: Any
+        obj: Any,
     ) -> str:
         if obj == None:
-            return "nil"
+            return 'nil'
 
-        if type(obj) == float:
+        if isinstance(obj, float):
             text = str(obj)
 
-            if text.endswith(".0"):
+            if text.endswith('.0'):
                 text = text[:-2]
 
             return text
-        elif type(obj) == bool:
+
+        if isinstance(obj, bool):
             if obj:
-                return "true"
+                return 'true'
             else:
-                return "false"
+                return 'false'
 
         return str(obj)

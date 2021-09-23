@@ -1,6 +1,5 @@
 import sys
 
-from ast_printer import AstPrinter
 from error_reporter import ErrorReporter
 from interpreter import Interpreter
 from velox_parser import Parser
@@ -14,7 +13,9 @@ class Velox:
     # Public methods
 
     @staticmethod
-    def run_file(path: str) -> None:
+    def run_file(
+        path: str,
+    ) -> None:
         with open(path, 'r') as in_file:
             source = in_file.read()
 
@@ -42,7 +43,9 @@ class Velox:
     # Private methods
 
     @staticmethod
-    def __run(source: str) -> None:
+    def __run(
+        source: str,
+    ) -> None:
         scanner = Scanner(source)
         tokens = scanner.scan_tokens()
 

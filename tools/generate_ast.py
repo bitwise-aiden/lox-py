@@ -1,12 +1,15 @@
 import sys
+from typing import AnyStr, IO
 
 
 class GenerateAst:
+    # Public methods
+
     @staticmethod
     def define_ast(
         output_directory: str,
         base_name: str,
-        types: list[str]
+        types: list[str],
     ) -> None:
         path = f'{output_directory}/{base_name.lower()}.py'
 
@@ -21,13 +24,17 @@ class GenerateAst:
             writer.write('\n\n')
 
             writer.write(f'class {base_name}:\n')
-            writer.write('    def accept(visitor: ForwardRef("Visitor[T]")) -> T:\n')
+            writer.write('    # Public methods\n')
+            writer.write('\n')
+            writer.write('    def accept(\n')
+            writer.write('        visitor: ForwardRef(\'Visitor[T]\'),\n')
+            writer.write('    ) -> T:\n')
             writer.write('        pass\n')
             writer.write('\n\n')
 
             for type in types:
                 class_name, fields = type.split(':')
-                GenerateAst.define_type(
+                GenerateAst.__define_type(
                     writer,
                     base_name,
                     class_name.strip(),
@@ -35,23 +42,27 @@ class GenerateAst:
                 )
                 writer.write('\n\n')
 
-            GenerateAst.define_visitor(
+            GenerateAst.__define_visitor(
                 writer,
                 base_name,
                 types,
             )
 
+
+    # Private methods
+
     @staticmethod
-    def define_type(
-        writer,
+    def __define_type(
+        writer: IO[AnyStr],
         base_name: str,
         class_name: str,
-        field_list: str
+        field_list: str,
     ) -> None:
         fields = field_list.split(', ')
 
         writer.write(f'class {base_name}{class_name}({base_name}):\n')
-
+        writer.write('    # Lifecycle methods\n')
+        writer.write('\n')
         writer.write('    def __init__(\n')
         writer.write('        self,\n')
 
@@ -59,7 +70,6 @@ class GenerateAst:
             type, name = field.split(' ')
 
             writer.write(f'        {name}: {type},\n')
-
         writer.write('    ) -> None:\n')
 
         for field in fields:
@@ -68,23 +78,32 @@ class GenerateAst:
             writer.write(f'        self.{name} = {name}\n')
         writer.write('\n\n')
 
-        writer.write('    def accept(self, visitor: ForwardRef("Visitor[T]")) -> T:\n')
+        writer.write('    # Public methods\n')
+        writer.write('\n')
+
+        writer.write('    def accept(\n')
+        writer.write('        self,\n')
+        writer.write('        visitor: ForwardRef(\'Visitor[T]\'),\n')
+        writer.write('    ) -> T:\n')
         writer.write(f'        return visitor.visit_{base_name}{class_name}(self)\n')
 
+
     @staticmethod
-    def define_visitor(
-        writer,
+    def __define_visitor(
+        writer: IO[AnyStr],
         base_name: str,
         types: list[str],
     ) -> None:
         writer.write(f'class Visitor(Generic[T]):\n')
+        writer.write('    # Public methods\n')
+        writer.write('\n')
 
         for type in types:
             type_name = type.split(':')[0].strip()
 
             writer.write(f'    def visit_{base_name}{type_name}(\n')
             writer.write('        self,\n')
-            writer.write(f'        {base_name.lower()}: {base_name}{type_name}\n')
+            writer.write(f'        {base_name.lower()}: {base_name}{type_name},\n')
             writer.write(f'    ) -> T:\n')
             writer.write('        pass\n')
             writer.write('\n\n')

@@ -9,12 +9,21 @@ class ParseError(Exception):
 
 
 class Parser:
-    def __init__(self, tokens: list[Token]) -> None:
+    # Lifecycle methods
+
+    def __init__(
+        self,
+        tokens: list[Token],
+    ) -> None:
         self.__tokens = tokens
         self.__current = 0
 
 
-    def parse(self) -> Expr:
+    # Public methods
+
+    def parse(
+        self,
+    ) -> Expr:
         try:
             return self.__expression()
         except ParseError as error:
@@ -22,19 +31,27 @@ class Parser:
 
 
     # Private methods
-    def __advance(self) -> Token:
+
+    def __advance(
+        self,
+    ) -> Token:
         if not self.__is_at_end():
             self.__current += 1
 
 
-    def __check(self, type: TokenType) -> bool:
+    def __check(
+        self,
+        type: TokenType,
+    ) -> bool:
         if self.__is_at_end():
             return False
 
         return self.__peek().type == type
 
 
-    def __comparison(self) -> Expr:
+    def __comparison(
+        self,
+    ) -> Expr:
         expr = self.__term()
 
         while self.__match(
@@ -50,14 +67,20 @@ class Parser:
         return expr
 
 
-    def __consume(self, type: TokenType, message: str) -> Token:
+    def __consume(
+        self,
+        type: TokenType,
+        message: str,
+    ) -> Token:
         if self.__check(type):
             return self.__advance()
 
         raise self.__error(self.__peek(), message)
 
 
-    def __equality(self) -> Expr:
+    def __equality(
+        self,
+    ) -> Expr:
         expr = self.__comparison()
 
         while self.__match(TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL):
@@ -68,16 +91,24 @@ class Parser:
         return expr
 
 
-    def __error(self, token: Token, message: str) -> ParseError:
+    def __error(
+        self,
+        token: Token,
+        message: str,
+    ) -> ParseError:
         ErrorReporter.error(token, message)
         return ParseError()
 
 
-    def __expression(self) -> Expr:
+    def __expression(
+        self,
+    ) -> Expr:
         return self.__equality()
 
 
-    def __factor(self) -> Expr:
+    def __factor(
+        self,
+    ) -> Expr:
         expr = self.__unary()
 
         while self.__match(TokenType.SLASH, TokenType.STAR):
@@ -88,11 +119,16 @@ class Parser:
         return expr
 
 
-    def __is_at_end(self) -> bool:
+    def __is_at_end(
+        self,
+    ) -> bool:
         return self.__peek().type == TokenType.EOF
 
 
-    def __match(self, *types: list[TokenType]) -> bool:
+    def __match(
+        self,
+        *types: list[TokenType],
+    ) -> bool:
         for type in types:
             if self.__check(type):
                 self.__advance()
@@ -101,15 +137,21 @@ class Parser:
         return False
 
 
-    def __peek(self) -> Token:
+    def __peek(
+        self,
+    ) -> Token:
         return self.__tokens[self.__current]
 
 
-    def __previous(self) -> Token:
+    def __previous(
+        self,
+    ) -> Token:
         return self.__tokens[self.__current - 1]
 
 
-    def __primary(self) -> Expr:
+    def __primary(
+        self,
+    ) -> Expr:
         if self.__match(TokenType.FALSE):
             return ExprLiteral(False)
 
@@ -126,14 +168,16 @@ class Parser:
             expr = self.__expression()
             self.__consume(
                 TokenType.RIGHT_PAREN,
-                "Expect ')' after expression."
+                'Expect \')\' after expression.'
             )
-            return ExprGourping(expr)
+            return ExprGrouping(expr)
 
-        raise self.__error(self.__peek(), "Expect expression.")
+        raise self.__error(self.__peek(), 'Expect expression.')
 
 
-    def __synchronize(self) -> None:
+    def __synchronize(
+        self,
+    ) -> None:
         self.__advance()
 
         while not self.__is_at_end():
@@ -155,7 +199,9 @@ class Parser:
             self.__advance()
 
 
-    def __term(self) -> Expr:
+    def __term(
+        self,
+    ) -> Expr:
         expr = self.__factor()
 
         while self.__match(TokenType.MINUS, TokenType.PLUS):
@@ -166,7 +212,9 @@ class Parser:
         return expr
 
 
-    def __unary(self) -> Expr:
+    def __unary(
+        self,
+    ) -> Expr:
         if self.__match(TokenType.BANG, TokenType.MINUS):
             operator = self.__previous()
             right = self.__unary()

@@ -2,11 +2,15 @@ import sys
 
 from ast_printer import AstPrinter
 from error_reporter import ErrorReporter
+from interpreter import Interpreter
 from velox_parser import Parser
 from scanner import Scanner
 
 
 class Velox:
+    __interpreter: Interpreter = Interpreter()
+
+
     # Public methods
 
     @staticmethod
@@ -18,6 +22,8 @@ class Velox:
 
             if ErrorReporter.had_error:
                 sys.exit(65)
+            elif ErrorReporter.had_runtime_error:
+                sys.exit(70)
 
 
     @staticmethod
@@ -46,7 +52,7 @@ class Velox:
         if ErrorReporter.had_error:
             return
 
-        print(AstPrinter().print(expression))
+        Velox.__interpreter.interpret(expression)
 
 
 if __name__ == '__main__':

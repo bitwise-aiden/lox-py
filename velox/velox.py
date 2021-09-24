@@ -50,12 +50,12 @@ class Velox:
         tokens = scanner.scan_tokens()
 
         parser = Parser(tokens)
-        expression = parser.parse()
+        statements = parser.parse()
 
         if ErrorReporter.had_error:
             return
 
-        Velox.__interpreter.interpret(expression)
+        Velox.__interpreter.interpret(statements)
 
 
 if __name__ == '__main__':

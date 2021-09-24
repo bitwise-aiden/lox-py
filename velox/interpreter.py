@@ -1,29 +1,50 @@
 from typing import Any
 
+from environment import Environment
 from error_reporter import ErrorReporter
-from expr import *
+import expr as Expr
 from runtime_error import RuntimeError
+import stmt as Stmt
 from token import Token
 from token_type import TokenType
 
 
-class Interpreter(Visitor[Any]):
+class Interpreter(Expr.Visitor[Any], Stmt.Visitor[None]):
+    # Lifecycle methods
+
+    def __init__(
+        self,
+    ) -> None:
+        self.__environment = Environment()
+
+
     # Public methods
 
     def interpret(
         self,
-        expression: Expr,
+        statements: list[Stmt.Stmt],
     ) -> None:
         try:
-            value = self.__evaluate(expression)
-            print(self.__stringify(value))
+            for statement in statements:
+                self.__execute(statement)
         except RuntimeError as error:
             ErrorReporter.runtime_error(error)
 
 
+    def visit_ExprAssign(
+        self,
+        expr: Expr.ExprAssign,
+    ) -> Any:
+        value = self.__evaluate(expr.value)
+
+        self.__environment.assign(expr.name, value)
+
+        return value
+
+
     def visit_ExprBinary(
         self,
-        expr: ExprBinary,
+        expr: Expr.ExprBinary,
     ) -> Any:
         left = self.__evaluate(expr.left)
         right = self.__evaluate(expr.right)
@@ -79,7 +100,7 @@ class Interpreter(Visitor[Any]):
 
     def visit_ExprGrouping(
         self,
-        expr: ExprGrouping,
+        expr: Expr.ExprGrouping,
     ) -> Any:
         return self.__evaluate(
             expr.expression,
@@ -88,14 +109,14 @@ class Interpreter(Visitor[Any]):
 
     def visit_ExprLiteral(
         self,
-        expr: ExprLiteral,
+        expr: Expr.ExprLiteral,
     ) -> Any:
         return expr.value
 
 
     def visit_ExprUnary(
         self,
-        expr: ExprUnary,
+        expr: Expr.ExprUnary,
     ) -> Any:
         right = self.__evaluate(expr.right)
 
@@ -107,6 +128,48 @@ class Interpreter(Visitor[Any]):
             return not self.__is_truthy(right)
 
         return None
+
+
+    def visit_ExprVariable(
+        self,
+        expr: Expr.ExprVariable,
+    ) -> Any:
+        return self.__environment.get(expr.name)
+
+
+    def visit_StmtBlock(
+        self,
+        stmt: Stmt.StmtBlock,
+    ) -> None:
+        self.__execute_block(stmt.statements, Environment(self.__environment))
+
+
+    def visit_StmtExpression(
+        self,
+        stmt: Stmt.StmtExpression,
+    ) -> None:
+        self.__evaluate(stmt.expression)
+
+
+    def visit_StmtPrint(
+        self,
+        stmt: Stmt.StmtPrint,
+    ) -> None:
+        value = self.__evaluate(stmt.expression)
+
+        print(self.__stringify(value))
+
+
+    def visit_StmtVar(
+        self,
+        stmt: Stmt.StmtVar,
+    ) -> None:
+        value = None
+
+        if stmt.initializer != None:
+            value = self.__evaluate(stmt.initializer)
+
+        self.__environment.define(stmt.name.lexeme, value)
 
 
     # Private methods
@@ -136,9 +199,32 @@ class Interpreter(Visitor[Any]):
 
     def __evaluate(
         self,
-        expr: Expr,
+        expr: Expr.Expr,
     ) -> Any:
         return expr.accept(self)
+
+
+    def __execute(
+        self,
+        stmt: Stmt.Stmt
+    ) -> None:
+        stmt.accept(self)
+
+
+    def __execute_block(
+        self,
+        statements: list[Stmt.Stmt],
+        environment: Environment,
+    ) -> None:
+        previous = self.__environment
+
+        try:
+            self.__environment = environment
+
+            for statement in statements:
+                self.__execute(statement)
+        finally:
+            self.__environment = previous
 
 
     def __is_equal(

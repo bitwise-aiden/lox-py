@@ -10,6 +10,7 @@ class GenerateAst:
         output_directory: str,
         base_name: str,
         types: list[str],
+        imports: list[str],
     ) -> None:
         path = f'{output_directory}/{base_name.lower()}.py'
 
@@ -17,7 +18,10 @@ class GenerateAst:
             writer.write('from typing import Any, ForwardRef, Generic, TypeVar\n')
             writer.write('\n')
 
-            writer.write('from token import Token\n')
+            for import_type in imports:
+                module, import_type = import_type.split(':')
+
+                writer.write(f'from {module.strip()} import {import_type.strip()}\n')
             writer.write('\n\n')
 
             writer.write('T = TypeVar(\'T\')\n')
@@ -118,9 +122,29 @@ if __name__ == '__main__':
     else:
         output_directory = args[0]
 
-        GenerateAst.define_ast(output_directory, 'Expr', [
-            'Binary   : Expr left, Token operator, Expr right',
-            'Grouping : Expr expression',
-            'Literal  : Any value',
-            'Unary    : Token operator, Expr right',
-        ])
+        GenerateAst.define_ast(output_directory, 'Expr',
+            [
+                'Assign   : Token name, Expr value',
+                'Binary   : Expr left, Token operator, Expr right',
+                'Grouping : Expr expression',
+                'Literal  : Any value',
+                'Unary    : Token operator, Expr right',
+                'Variable : Token name',
+            ],
+            [
+                'token : Token',
+            ],
+        )
+
+        GenerateAst.define_ast(output_directory, 'Stmt',
+            [
+                'Block      : list[Stmt] statements',
+                'Expression : Expr expression',
+                'Print      : Expr expression',
+                'Var        : Token name, Expr initializer',
+            ],
+            [
+                'expr : Expr',
+                'token : Token',
+            ],
+        )

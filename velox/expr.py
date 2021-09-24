@@ -15,6 +15,27 @@ class Expr:
         pass
 
 
+class ExprAssign(Expr):
+    # Lifecycle methods
+
+    def __init__(
+        self,
+        name: Token,
+        value: Expr,
+    ) -> None:
+        self.name = name
+        self.value = value
+
+
+    # Public methods
+
+    def accept(
+        self,
+        visitor: ForwardRef('Visitor[T]'),
+    ) -> T:
+        return visitor.visit_ExprAssign(self)
+
+
 class ExprBinary(Expr):
     # Lifecycle methods
 
@@ -97,8 +118,34 @@ class ExprUnary(Expr):
         return visitor.visit_ExprUnary(self)
 
 
+class ExprVariable(Expr):
+    # Lifecycle methods
+
+    def __init__(
+        self,
+        name: Token,
+    ) -> None:
+        self.name = name
+
+
+    # Public methods
+
+    def accept(
+        self,
+        visitor: ForwardRef('Visitor[T]'),
+    ) -> T:
+        return visitor.visit_ExprVariable(self)
+
+
 class Visitor(Generic[T]):
     # Public methods
+
+    def visit_ExprAssign(
+        self,
+        expr: ExprAssign,
+    ) -> T:
+        pass
+
 
     def visit_ExprBinary(
         self,
@@ -126,3 +173,12 @@ class Visitor(Generic[T]):
         expr: ExprUnary,
     ) -> T:
         pass
+
+
+    def visit_ExprVariable(
+        self,
+        expr: ExprVariable,
+    ) -> T:
+        pass
+
+

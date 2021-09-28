@@ -44,10 +44,25 @@ class Parser:
         return self.__previous()
 
 
+    def __and(
+        self,
+    ) -> Expr.Expr:
+        expr = self.__equality()
+
+        while self.__match(TokenType.AND):
+            operator = self.__previous()
+
+            right = self.__equality()
+
+            expr = Expr.ExprLogical(expr, operator, right)
+
+        return expr
+
+
     def __assignment(
         self,
     )-> Expr.Expr:
-        expr = self.__equality()
+        expr = self.__or()
 
         if self.__match(TokenType.EQUAL):
             equals = self.__previous()
@@ -70,7 +85,7 @@ class Parser:
         while not (self.__check(TokenType.RIGHT_BRACE) or self.__is_at_end()):
             statements.append(self.__declaration())
 
-        self.__consume(TokenType.RIGHT_BRACE, 'Expect \'}\' after block.')
+        self.__consume(TokenType.RIGHT_BRACE, 'Expected \'}\' after block.')
 
         return statements
 
@@ -164,6 +179,24 @@ class Parser:
         return Stmt.StmtExpression(expr)
 
 
+    def __if_statement(
+        self,
+    ) -> Stmt.Stmt:
+        self.__consume(TokenType.LEFT_PAREN, 'Expected \'(\' after \'if\'.')
+
+        condition = self.__expression()
+
+        self.__consume(TokenType.RIGHT_PAREN, 'Expected \')\' after if condition.')
+
+        then_branch = self.__statement()
+
+        else_branch = None
+        if self.__match(TokenType.ELSE):
+            else_branch = self.__statement()
+
+        return Stmt.StmtIf(condition, then_branch, else_branch)
+
+
     def __factor(
         self,
     ) -> Expr.Expr:
@@ -175,6 +208,55 @@ class Parser:
             expr = Expr.ExprBinary(expr, operator, right)
 
         return expr
+
+
+    def __for_statement(
+        self,
+    ) -> Stmt.Stmt:
+        self.__consume(TokenType.LEFT_PAREN, 'Expected \'(\' after \'for\'.')
+
+        initializer = None
+        if self.__match(TokenType.SEMICOLON):
+            initializer = None
+        elif self.__match(TokenType.VAR):
+            initializer = self.__var_declaration()
+        else:
+            initializer = self.__expression_statement()
+
+        if not self.__check(TokenType.SEMICOLON):
+            condition = self.__expression()
+        else:
+            condition = Expr.ExprLiteral(True)
+
+
+        self.__consume(TokenType.SEMICOLON, 'Expected \';\' after loop condition.')
+
+        increment = None
+        if not self.__check(TokenType.RIGHT_PAREN):
+            increment = self.__expression()
+
+        self.__consume(TokenType.RIGHT_PAREN, 'Expected \')\' after for clauses.')
+
+        body = self.__statement()
+
+        if increment is not None:
+            body = Stmt.StmtBlock([
+                body,
+                Stmt.StmtExpression(increment),
+            ])
+
+        body = Stmt.StmtWhile(
+            condition,
+            body,
+        )
+
+        if initializer is not None:
+            body = Stmt.StmtBlock([
+                initializer,
+                body,
+            ])
+
+        return body
 
 
     def __is_at_end(
@@ -194,6 +276,20 @@ class Parser:
 
         return False
 
+
+    def __or(
+        self,
+    ) -> Expr.Expr:
+        expr = self.__and()
+
+        while self.__match(TokenType.OR):
+            operator = self.__previous()
+
+            right = self.__and()
+
+            expr = Expr.ExprLogical(expr, operator, right)
+
+        return expr
 
     def __peek(
         self,
@@ -226,14 +322,14 @@ class Parser:
             expr = self.__expression()
             self.__consume(
                 TokenType.RIGHT_PAREN,
-                'Expect \')\' after expression.'
+                'Expected \')\' after expression.'
             )
             return Expr.ExprGrouping(expr)
 
         if self.__match(TokenType.IDENTIFIER):
             return Expr.ExprVariable(self.__previous())
 
-        raise self.__error(self.__peek(), 'Expect expression.')
+        raise self.__error(self.__peek(), 'Expected expression.')
 
 
     def __print_statement(
@@ -249,6 +345,15 @@ class Parser:
     def __statement(
         self
     ) -> Stmt.Stmt:
+        if self.__match(TokenType.FOR):
+            return self.__for_statement()
+
+        if self.__match(TokenType.IF):
+            return self.__if_statement()
+
+        if self.__match(TokenType.WHILE):
+            return self.__while_statement()
+
         if self.__match(TokenType.PRINT):
             return self.__print_statement()
 
@@ -315,6 +420,20 @@ class Parser:
         if self.__match(TokenType.EQUAL):
             initializer = self.__expression()
 
-        self.__consume(TokenType.SEMICOLON, 'Expect \';\' after variable declaration')
+        self.__consume(TokenType.SEMICOLON, 'Expected \';\' after variable declaration')
 
         return Stmt.StmtVar(name, initializer)
+
+
+    def __while_statement(
+        self,
+    ) -> Stmt.Stmt:
+        self.__consume(TokenType.LEFT_PAREN, 'Expected \'(\' after \'while\'.')
+
+        condition = self.__expression()
+
+        self.__consume(TokenType.RIGHT_PAREN, 'Expected \')\' after condiiton.')
+
+        body = self.__statement()
+
+        return Stmt.StmtWhile(condition, body)

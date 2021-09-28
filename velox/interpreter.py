@@ -114,6 +114,22 @@ class Interpreter(Expr.Visitor[Any], Stmt.Visitor[None]):
         return expr.value
 
 
+    def visit_ExprLogical(
+        self,
+        expr: Expr.ExprLogical,
+    ) -> Any:
+        left = self.__evaluate(expr.left)
+
+        if expr.operator.type == TokenType.OR:
+            if self.__is_truthy(left):
+                return left
+        else:
+            if not self.__is_truthy(left):
+                return left
+
+        return self.__evaluate(expr.right)
+
+
     def visit_ExprUnary(
         self,
         expr: Expr.ExprUnary,
@@ -151,6 +167,16 @@ class Interpreter(Expr.Visitor[Any], Stmt.Visitor[None]):
         self.__evaluate(stmt.expression)
 
 
+    def visit_StmtIf(
+        self,
+        stmt: Stmt.StmtIf,
+    ) -> None:
+        if (self.__is_truthy(self.__evaluate(stmt.condition))):
+            self.__execute(stmt.then_branch)
+        else:
+            self.__execute(stmt.else_branch)
+
+
     def visit_StmtPrint(
         self,
         stmt: Stmt.StmtPrint,
@@ -170,6 +196,14 @@ class Interpreter(Expr.Visitor[Any], Stmt.Visitor[None]):
             value = self.__evaluate(stmt.initializer)
 
         self.__environment.define(stmt.name.lexeme, value)
+
+
+    def visit_StmtWhile(
+        self,
+        stmt: Stmt.StmtVar,
+    ) -> None:
+        while self.__is_truthy(self.__evaluate(stmt.condition)):
+            self.__execute(stmt.body)
 
 
     # Private methods

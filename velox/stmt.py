@@ -54,6 +54,29 @@ class StmtExpression(Stmt):
         return visitor.visit_StmtExpression(self)
 
 
+class StmtIf(Stmt):
+    # Lifecycle methods
+
+    def __init__(
+        self,
+        condition: Expr,
+        then_branch: Stmt,
+        else_branch: Stmt,
+    ) -> None:
+        self.condition = condition
+        self.then_branch = then_branch
+        self.else_branch = else_branch
+
+
+    # Public methods
+
+    def accept(
+        self,
+        visitor: ForwardRef('Visitor[T]'),
+    ) -> T:
+        return visitor.visit_StmtIf(self)
+
+
 class StmtPrint(Stmt):
     # Lifecycle methods
 
@@ -94,6 +117,27 @@ class StmtVar(Stmt):
         return visitor.visit_StmtVar(self)
 
 
+class StmtWhile(Stmt):
+    # Lifecycle methods
+
+    def __init__(
+        self,
+        condition: Expr,
+        body: Stmt,
+    ) -> None:
+        self.condition = condition
+        self.body = body
+
+
+    # Public methods
+
+    def accept(
+        self,
+        visitor: ForwardRef('Visitor[T]'),
+    ) -> T:
+        return visitor.visit_StmtWhile(self)
+
+
 class Visitor(Generic[T]):
     # Public methods
 
@@ -111,6 +155,13 @@ class Visitor(Generic[T]):
         pass
 
 
+    def visit_StmtIf(
+        self,
+        stmt: StmtIf,
+    ) -> T:
+        pass
+
+
     def visit_StmtPrint(
         self,
         stmt: StmtPrint,
@@ -121,6 +172,13 @@ class Visitor(Generic[T]):
     def visit_StmtVar(
         self,
         stmt: StmtVar,
+    ) -> T:
+        pass
+
+
+    def visit_StmtWhile(
+        self,
+        stmt: StmtWhile,
     ) -> T:
         pass
 

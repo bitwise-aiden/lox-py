@@ -97,6 +97,29 @@ class ExprLiteral(Expr):
         return visitor.visit_ExprLiteral(self)
 
 
+class ExprLogical(Expr):
+    # Lifecycle methods
+
+    def __init__(
+        self,
+        left: Expr,
+        operator: Token,
+        right: Expr,
+    ) -> None:
+        self.left = left
+        self.operator = operator
+        self.right = right
+
+
+    # Public methods
+
+    def accept(
+        self,
+        visitor: ForwardRef('Visitor[T]'),
+    ) -> T:
+        return visitor.visit_ExprLogical(self)
+
+
 class ExprUnary(Expr):
     # Lifecycle methods
 
@@ -164,6 +187,13 @@ class Visitor(Generic[T]):
     def visit_ExprLiteral(
         self,
         expr: ExprLiteral,
+    ) -> T:
+        pass
+
+
+    def visit_ExprLogical(
+        self,
+        expr: ExprLogical,
     ) -> T:
         pass
 

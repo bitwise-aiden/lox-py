@@ -34,3 +34,37 @@ var a = 1;
   var a = a + 2;
   print a;
 }
+
+print "hi" or 2; // "hi".
+print nil or "yes"; // "yes".
+
+if (true)
+{
+  print "Inside then";
+}
+
+if (false)
+{
+  // Ignored
+}
+else
+{
+  print "Inside else";
+}
+
+var loop = 0;
+
+while (loop < 10)
+{
+  print loop;
+  loop = loop + 1;
+}
+
+var a = 0;
+var temp;
+
+for (var b = 1; a < 10000; b = temp + b) {
+  print a;
+  temp = a;
+  a = b;
+}

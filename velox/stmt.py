@@ -54,6 +54,29 @@ class StmtExpression(Stmt):
         return visitor.visit_StmtExpression(self)
 
 
+class StmtFunction(Stmt):
+    # Lifecycle methods
+
+    def __init__(
+        self,
+        name: Token,
+        params: list[Token],
+        body: list[Stmt],
+    ) -> None:
+        self.name = name
+        self.params = params
+        self.body = body
+
+
+    # Public methods
+
+    def accept(
+        self,
+        visitor: ForwardRef('Visitor[T]'),
+    ) -> T:
+        return visitor.visit_StmtFunction(self)
+
+
 class StmtIf(Stmt):
     # Lifecycle methods
 
@@ -94,6 +117,27 @@ class StmtPrint(Stmt):
         visitor: ForwardRef('Visitor[T]'),
     ) -> T:
         return visitor.visit_StmtPrint(self)
+
+
+class StmtReturn(Stmt):
+    # Lifecycle methods
+
+    def __init__(
+        self,
+        keyword: Token,
+        value: Expr,
+    ) -> None:
+        self.keyword = keyword
+        self.value = value
+
+
+    # Public methods
+
+    def accept(
+        self,
+        visitor: ForwardRef('Visitor[T]'),
+    ) -> T:
+        return visitor.visit_StmtReturn(self)
 
 
 class StmtVar(Stmt):
@@ -155,6 +199,13 @@ class Visitor(Generic[T]):
         pass
 
 
+    def visit_StmtFunction(
+        self,
+        stmt: StmtFunction,
+    ) -> T:
+        pass
+
+
     def visit_StmtIf(
         self,
         stmt: StmtIf,
@@ -165,6 +216,13 @@ class Visitor(Generic[T]):
     def visit_StmtPrint(
         self,
         stmt: StmtPrint,
+    ) -> T:
+        pass
+
+
+    def visit_StmtReturn(
+        self,
+        stmt: StmtReturn,
     ) -> T:
         pass
 

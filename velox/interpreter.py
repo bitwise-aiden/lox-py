@@ -1,5 +1,6 @@
 from typing import Any
 
+from callables import Clock, VeloxFunction
 from environment import Environment
 from error_reporter import ErrorReporter
 import expr as Expr
@@ -7,6 +8,8 @@ from runtime_error import RuntimeError
 import stmt as Stmt
 from token import Token
 from token_type import TokenType
+from velox_callable import VeloxCallable
+from velox_return import VeloxReturn
 
 
 class Interpreter(Expr.Visitor[Any], Stmt.Visitor[None]):
@@ -15,10 +18,30 @@ class Interpreter(Expr.Visitor[Any], Stmt.Visitor[None]):
     def __init__(
         self,
     ) -> None:
-        self.__environment = Environment()
+        self.__globals = Environment()
+        self.environment = self.__globals
+
+        self.__globals.define('clock', Clock)
 
 
     # Public methods
+
+
+    def execute_block(
+        self,
+        statements: list[Stmt.Stmt],
+        environment: Environment,
+    ) -> None:
+        previous = self.environment
+
+        try:
+            self.environment = environment
+
+            for statement in statements:
+                self.__execute(statement)
+        finally:
+            self.environment = previous
+
 
     def interpret(
         self,
@@ -37,7 +60,7 @@ class Interpreter(Expr.Visitor[Any], Stmt.Visitor[None]):
     ) -> Any:
         value = self.__evaluate(expr.value)
 
-        self.__environment.assign(expr.name, value)
+        self.environment.assign(expr.name, value)
 
         return value
 
@@ -98,6 +121,26 @@ class Interpreter(Expr.Visitor[Any], Stmt.Visitor[None]):
         return None
 
 
+    def visit_ExprCall(
+        self,
+        expr: Expr.ExprCall,
+    ) -> Any:
+        callee = self.__evaluate(expr.callee)
+
+        arguments = [
+            self.__evaluate(argument) for argument in expr.arguments
+        ]
+
+        if not isinstance(callee, VeloxCallable):
+            raise RuntimeError(expr.paren, 'Can only call functions and classes.')
+
+
+        if len(arguments) != callee.arity():
+            raise RuntimeError(expr.paren, f'Expected {callee.arity()} arguments but got {len(arguments)}.')
+
+        return callee.call(self, arguments)
+
+
     def visit_ExprGrouping(
         self,
         expr: Expr.ExprGrouping,
@@ -150,14 +193,14 @@ class Interpreter(Expr.Visitor[Any], Stmt.Visitor[None]):
         self,
         expr: Expr.ExprVariable,
     ) -> Any:
-        return self.__environment.get(expr.name)
+        return self.environment.get(expr.name)
 
 
     def visit_StmtBlock(
         self,
         stmt: Stmt.StmtBlock,
     ) -> None:
-        self.__execute_block(stmt.statements, Environment(self.__environment))
+        self.execute_block(stmt.statements, Environment(self.environment))
 
 
     def visit_StmtExpression(
@@ -165,6 +208,15 @@ class Interpreter(Expr.Visitor[Any], Stmt.Visitor[None]):
         stmt: Stmt.StmtExpression,
     ) -> None:
         self.__evaluate(stmt.expression)
+
+
+    def visit_StmtFunction(
+        self,
+        stmt: Stmt.StmtFunction,
+    ) -> None:
+        function = VeloxFunction(stmt, self.environment)
+
+        self.environment.define(stmt.name.lexeme, function)
 
 
     def visit_StmtIf(
@@ -186,6 +238,18 @@ class Interpreter(Expr.Visitor[Any], Stmt.Visitor[None]):
         print(self.__stringify(value))
 
 
+    def visit_StmtReturn(
+        self,
+        stmt: Stmt.StmtReturn,
+    ) -> None:
+        value = None
+
+        if stmt.value != None:
+            value = self.__evaluate(stmt.value)
+
+        raise VeloxReturn(value)
+
+
     def visit_StmtVar(
         self,
         stmt: Stmt.StmtVar,
@@ -195,7 +259,7 @@ class Interpreter(Expr.Visitor[Any], Stmt.Visitor[None]):
         if stmt.initializer != None:
             value = self.__evaluate(stmt.initializer)
 
-        self.__environment.define(stmt.name.lexeme, value)
+        self.environment.define(stmt.name.lexeme, value)
 
 
     def visit_StmtWhile(
@@ -243,22 +307,6 @@ class Interpreter(Expr.Visitor[Any], Stmt.Visitor[None]):
         stmt: Stmt.Stmt
     ) -> None:
         stmt.accept(self)
-
-
-    def __execute_block(
-        self,
-        statements: list[Stmt.Stmt],
-        environment: Environment,
-    ) -> None:
-        previous = self.__environment
-
-        try:
-            self.__environment = environment
-
-            for statement in statements:
-                self.__execute(statement)
-        finally:
-            self.__environment = previous
 
 
     def __is_equal(

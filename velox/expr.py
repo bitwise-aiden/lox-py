@@ -59,6 +59,29 @@ class ExprBinary(Expr):
         return visitor.visit_ExprBinary(self)
 
 
+class ExprCall(Expr):
+    # Lifecycle methods
+
+    def __init__(
+        self,
+        callee: Expr,
+        paren: Token,
+        arguments: list[Expr],
+    ) -> None:
+        self.callee = callee
+        self.paren = paren
+        self.arguments = arguments
+
+
+    # Public methods
+
+    def accept(
+        self,
+        visitor: ForwardRef('Visitor[T]'),
+    ) -> T:
+        return visitor.visit_ExprCall(self)
+
+
 class ExprGrouping(Expr):
     # Lifecycle methods
 
@@ -173,6 +196,13 @@ class Visitor(Generic[T]):
     def visit_ExprBinary(
         self,
         expr: ExprBinary,
+    ) -> T:
+        pass
+
+
+    def visit_ExprCall(
+        self,
+        expr: ExprCall,
     ) -> T:
         pass
 

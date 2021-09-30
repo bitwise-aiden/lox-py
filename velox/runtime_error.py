@@ -9,6 +9,7 @@ class RuntimeError(Exception):
         token: Token,
         message: str,
     ) -> None:
-        super(message)
+        super().__init__(message)
 
         self.token = token
+        self.message = message

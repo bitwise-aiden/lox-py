@@ -173,7 +173,7 @@ class Interpreter(Expr.Visitor[Any], Stmt.Visitor[None]):
     ) -> None:
         if (self.__is_truthy(self.__evaluate(stmt.condition))):
             self.__execute(stmt.then_branch)
-        else:
+        elif stmt.else_branch != None:
             self.__execute(stmt.else_branch)
 
 

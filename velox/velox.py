@@ -2,6 +2,7 @@ import sys
 
 from error_reporter import ErrorReporter
 from interpreter import Interpreter
+from resolver import Resolver
 from velox_parser import Parser
 from scanner import Scanner
 
@@ -51,6 +52,12 @@ class Velox:
 
         parser = Parser(tokens)
         statements = parser.parse()
+
+        if ErrorReporter.had_error:
+            return
+
+        resolver = Resolver(Velox.__interpreter)
+        resolver.resolve(*statements)
 
         if ErrorReporter.had_error:
             return

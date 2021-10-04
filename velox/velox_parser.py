@@ -298,7 +298,6 @@ class Parser:
         else:
             condition = Expr.ExprLiteral(True)
 
-
         self.__consume(TokenType.SEMICOLON, 'Expected \';\' after loop condition.')
 
         increment = None

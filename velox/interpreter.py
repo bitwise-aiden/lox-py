@@ -19,9 +19,11 @@ class Interpreter(Expr.Visitor[Any], Stmt.Visitor[None]):
         self,
     ) -> None:
         self.__globals = Environment()
-        self.environment = self.__globals
-
         self.__globals.define('clock', Clock)
+
+        self.__locals = {}
+
+        self.environment = self.__globals
 
 
     # Public methods
@@ -54,13 +56,26 @@ class Interpreter(Expr.Visitor[Any], Stmt.Visitor[None]):
             ErrorReporter.runtime_error(error)
 
 
+    def resolve(
+        self,
+        expr: Expr.Expr,
+        depth: int,
+    ) -> None:
+        self.__locals[expr] = depth
+
+
     def visit_ExprAssign(
         self,
         expr: Expr.ExprAssign,
     ) -> Any:
         value = self.__evaluate(expr.value)
 
-        self.environment.assign(expr.name, value)
+        distance = self.__locals.get(expr)
+
+        if distance != None:
+            self.environment.assign_at(distance, expr.name, value)
+        else:
+            self.__globals.assign(expr.name, value)
 
         return value
 
@@ -193,7 +208,7 @@ class Interpreter(Expr.Visitor[Any], Stmt.Visitor[None]):
         self,
         expr: Expr.ExprVariable,
     ) -> Any:
-        return self.environment.get(expr.name)
+        return self.__look_up_variable(expr.name, expr)
 
 
     def visit_StmtBlock(
@@ -223,7 +238,7 @@ class Interpreter(Expr.Visitor[Any], Stmt.Visitor[None]):
         self,
         stmt: Stmt.StmtIf,
     ) -> None:
-        if (self.__is_truthy(self.__evaluate(stmt.condition))):
+        if self.__is_truthy(self.__evaluate(stmt.condition)):
             self.__execute(stmt.then_branch)
         elif stmt.else_branch != None:
             self.__execute(stmt.else_branch)
@@ -292,7 +307,7 @@ class Interpreter(Expr.Visitor[Any], Stmt.Visitor[None]):
         if isinstance(left, float) and isinstance(right, float):
             return
 
-        raise RuntimeError(operator, 'Operands must be a numbers.')
+        raise RuntimeError(operator, 'Operands must be numbers.')
 
 
     def __evaluate(
@@ -328,6 +343,19 @@ class Interpreter(Expr.Visitor[Any], Stmt.Visitor[None]):
             return bool(obj)
 
         return True
+
+
+    def __look_up_variable(
+        self,
+        name: Token,
+        expr: Expr.Expr,
+    ) -> Any:
+        distance = self.__locals.get(expr)
+
+        if distance != None:
+            return self.environment.get_at(distance, name.lexeme)
+
+        return self.__globals.get(name)
 
 
     def __stringify(

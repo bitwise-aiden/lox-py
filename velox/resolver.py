@@ -1,11 +1,13 @@
 from typing import Any, Union
 
+from class_type import ClassType
 from error_reporter import ErrorReporter
 import expr as Expr
 from function_type import FunctionType
 from interpreter import Interpreter
 import stmt as Stmt
 from token import Token
+
 
 class Resolver(Expr.Visitor[None], Stmt.Visitor[None]):
     # Lifecycle methods
@@ -16,6 +18,7 @@ class Resolver(Expr.Visitor[None], Stmt.Visitor[None]):
     ) -> None:
         self.__interpreter = interpreter
 
+        self.__current_class = ClassType.NONE
         self.__current_function = FunctionType.NONE
         self.__scopes = []
 
@@ -58,6 +61,13 @@ class Resolver(Expr.Visitor[None], Stmt.Visitor[None]):
             self.resolve(argument)
 
 
+    def visit_ExprGet(
+        self,
+        expr: Expr.ExprGet,
+    ) -> None:
+        self.resolve(expr.object)
+
+
     def visit_ExprGrouping(
         self,
         expr: Expr.ExprGrouping,
@@ -79,6 +89,25 @@ class Resolver(Expr.Visitor[None], Stmt.Visitor[None]):
         self.resolve(expr.left)
 
         self.resolve(expr.right)
+
+
+    def visit_ExprSet(
+        self,
+        expr: Expr.ExprSet,
+    ) -> None:
+        self.resolve(expr.value)
+
+        self.resolve(expr.object)
+
+
+    def visit_ExprThis(
+        self,
+        expr: Expr.ExprThis,
+    ) -> None:
+        if self.__current_class == ClassType.NONE:
+            ErrorReporter.error(expr.keyword, 'Can\'t use \'this\' outside of a class.')
+
+        self.__resolve_local(expr, expr.keyword)
 
 
     def visit_ExprUnary(
@@ -107,6 +136,34 @@ class Resolver(Expr.Visitor[None], Stmt.Visitor[None]):
         self.resolve(*stmt.statements)
 
         self.__end_scope()
+
+
+    def visit_StmtClass(
+        self,
+        stmt: Stmt.StmtClass,
+    ) -> None:
+        enclosing_class = self.__current_class
+        self.__current_class = ClassType.CLASS
+
+        self.__declare(stmt.name)
+
+        self.__define(stmt.name)
+
+        self.__begin_scope()
+
+        self.__scopes[-1]['this'] = True
+
+        for method in stmt.methods:
+            declaration = FunctionType.METHOD
+
+            if method.name.lexeme == 'init':
+                declaration = FunctionType.INITIALIZER
+
+            self.__resolve_function(method, declaration)
+
+        self.__end_scope()
+
+        self.__current_class = enclosing_class
 
 
     def visit_StmtExpression(
@@ -154,6 +211,9 @@ class Resolver(Expr.Visitor[None], Stmt.Visitor[None]):
             ErrorReporter.error(stmt.keyword, 'Can\'t return from top-level code.')
 
         if stmt.value != None:
+            if self.__current_function == FunctionType.INITIALIZER:
+                ErrorReporter.error(stmt.keyword, 'Can\'t return a value from an initializer.')
+
             self.resolve(stmt.value)
 
 

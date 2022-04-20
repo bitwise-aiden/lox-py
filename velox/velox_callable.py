@@ -4,7 +4,6 @@ from typing import Any, ForwardRef
 class VeloxCallable:
     # Public methods
 
-
     def arity(
         self,
     ) -> int:

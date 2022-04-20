@@ -82,6 +82,27 @@ class ExprCall(Expr):
         return visitor.visit_ExprCall(self)
 
 
+class ExprGet(Expr):
+    # Lifecycle methods
+
+    def __init__(
+        self,
+        object: Expr,
+        name: Token,
+    ) -> None:
+        self.object = object
+        self.name = name
+
+
+    # Public methods
+
+    def accept(
+        self,
+        visitor: ForwardRef('Visitor[T]'),
+    ) -> T:
+        return visitor.visit_ExprGet(self)
+
+
 class ExprGrouping(Expr):
     # Lifecycle methods
 
@@ -141,6 +162,48 @@ class ExprLogical(Expr):
         visitor: ForwardRef('Visitor[T]'),
     ) -> T:
         return visitor.visit_ExprLogical(self)
+
+
+class ExprSet(Expr):
+    # Lifecycle methods
+
+    def __init__(
+        self,
+        object: Expr,
+        name: Token,
+        value: Expr,
+    ) -> None:
+        self.object = object
+        self.name = name
+        self.value = value
+
+
+    # Public methods
+
+    def accept(
+        self,
+        visitor: ForwardRef('Visitor[T]'),
+    ) -> T:
+        return visitor.visit_ExprSet(self)
+
+
+class ExprThis(Expr):
+    # Lifecycle methods
+
+    def __init__(
+        self,
+        keyword: Token,
+    ) -> None:
+        self.keyword = keyword
+
+
+    # Public methods
+
+    def accept(
+        self,
+        visitor: ForwardRef('Visitor[T]'),
+    ) -> T:
+        return visitor.visit_ExprThis(self)
 
 
 class ExprUnary(Expr):
@@ -207,6 +270,13 @@ class Visitor(Generic[T]):
         pass
 
 
+    def visit_ExprGet(
+        self,
+        expr: ExprGet,
+    ) -> T:
+        pass
+
+
     def visit_ExprGrouping(
         self,
         expr: ExprGrouping,
@@ -224,6 +294,20 @@ class Visitor(Generic[T]):
     def visit_ExprLogical(
         self,
         expr: ExprLogical,
+    ) -> T:
+        pass
+
+
+    def visit_ExprSet(
+        self,
+        expr: ExprSet,
+    ) -> T:
+        pass
+
+
+    def visit_ExprThis(
+        self,
+        expr: ExprThis,
     ) -> T:
         pass
 

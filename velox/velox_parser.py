@@ -71,6 +71,8 @@ class Parser:
             if isinstance(expr, Expr.ExprVariable):
                 name = expr.name
                 return Expr.ExprAssign(name, value)
+            elif isinstance(expr, Expr.ExprGet):
+                return Expr.ExprSet(expr.object, expr.name, value)
 
             self.__error(equals, 'Invalid assignment target.')
 
@@ -98,6 +100,10 @@ class Parser:
         while True:
             if self.__match(TokenType.LEFT_PAREN):
                 expr = self.__finish_call(expr)
+            elif self.__match(TokenType.DOT):
+                name = self.__consume(TokenType.IDENTIFIER, 'Expect property name after \'.\'.')
+
+                expr = Expr.ExprGet(expr, name)
             else:
                 break
 
@@ -113,6 +119,21 @@ class Parser:
 
         return self.__peek().type == type
 
+
+    def __class_declaration(
+        self,
+    ) -> Stmt:
+        name = self.__consume(TokenType.IDENTIFIER, 'Expect class name.')
+
+        self.__consume(TokenType.LEFT_BRACE, 'Expect \'{\' before class body.')
+
+        methods = []
+        while not self.__check(TokenType.RIGHT_BRACE) and not self.__is_at_end():
+            methods.append(self.__function('method'))
+
+        self.__consume(TokenType.RIGHT_BRACE, 'Expect \'}\' after class body.')
+
+        return Stmt.StmtClass(name, methods)
 
     def __comparison(
         self,
@@ -147,6 +168,9 @@ class Parser:
         self,
     ) -> Stmt:
         try:
+            if self.__match(TokenType.CLASS):
+                return self.__class_declaration()
+
             if self.__match(TokenType.FUN):
                 return self.__function('function')
 
@@ -394,6 +418,9 @@ class Parser:
                 'Expected \')\' after expression.'
             )
             return Expr.ExprGrouping(expr)
+
+        if self.__match(TokenType.THIS):
+            return Expr.ExprThis(self.__previous())
 
         if self.__match(TokenType.IDENTIFIER):
             return Expr.ExprVariable(self.__previous())

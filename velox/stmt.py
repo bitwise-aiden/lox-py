@@ -35,6 +35,27 @@ class StmtBlock(Stmt):
         return visitor.visit_StmtBlock(self)
 
 
+class StmtClass(Stmt):
+    # Lifecycle methods
+
+    def __init__(
+        self,
+        name: Token,
+        methods: list[Stmt],
+    ) -> None:
+        self.name = name
+        self.methods = methods
+
+
+    # Public methods
+
+    def accept(
+        self,
+        visitor: ForwardRef('Visitor[T]'),
+    ) -> T:
+        return visitor.visit_StmtClass(self)
+
+
 class StmtExpression(Stmt):
     # Lifecycle methods
 
@@ -188,6 +209,13 @@ class Visitor(Generic[T]):
     def visit_StmtBlock(
         self,
         stmt: StmtBlock,
+    ) -> T:
+        pass
+
+
+    def visit_StmtClass(
+        self,
+        stmt: StmtClass,
     ) -> T:
         pass
 

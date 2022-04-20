@@ -1,6 +1,6 @@
 from typing import Any
 
-from callables import Clock, VeloxFunction
+from callables import Clock, VeloxClass, VeloxFunction
 from environment import Environment
 from error_reporter import ErrorReporter
 import expr as Expr
@@ -9,6 +9,7 @@ import stmt as Stmt
 from token import Token
 from token_type import TokenType
 from velox_callable import VeloxCallable
+from velox_instance import VeloxInstance
 from velox_return import VeloxReturn
 
 
@@ -156,6 +157,18 @@ class Interpreter(Expr.Visitor[Any], Stmt.Visitor[None]):
         return callee.call(self, arguments)
 
 
+    def visit_ExprGet(
+        self,
+        expr: Expr.ExprGet,
+    ) -> Any:
+        object = self.__evaluate(expr.object)
+
+        if isinstance(object, VeloxInstance):
+            return object.get(expr.name)
+
+        raise RuntimeError(expr.name, 'Only instances have properties.')
+
+
     def visit_ExprGrouping(
         self,
         expr: Expr.ExprGrouping,
@@ -188,6 +201,29 @@ class Interpreter(Expr.Visitor[Any], Stmt.Visitor[None]):
         return self.__evaluate(expr.right)
 
 
+    def visit_ExprSet(
+        self,
+        expr: Expr.ExprSet,
+    ) -> Any:
+        object = self.__evaluate(expr.object)
+
+        if not isinstance(object, VeloxInstance):
+            raise RuntimeError(expr.name, "Only instances have fields.")
+
+        value = self.__evaluate(expr.value)
+
+        object.set(expr.name, value)
+
+        return value
+
+
+    def visit_ExprThis(
+        self,
+        expr: Expr.ExprThis,
+    ) -> Any:
+        return self.__look_up_variable(expr.keyword, expr)
+
+
     def visit_ExprUnary(
         self,
         expr: Expr.ExprUnary,
@@ -218,6 +254,25 @@ class Interpreter(Expr.Visitor[Any], Stmt.Visitor[None]):
         self.execute_block(stmt.statements, Environment(self.environment))
 
 
+    def visit_StmtClass(
+        self,
+        stmt: Stmt.StmtClass,
+    ) -> None:
+        self.environment.define(stmt.name.lexeme, None)
+
+        methods = {}
+        for method in stmt.methods:
+            is_initializer = method.name.lexeme == 'init'
+
+            function = VeloxFunction(method, self.environment, is_initializer)
+
+            methods[method.name.lexeme] = function
+
+        klass = VeloxClass(stmt.name.lexeme, methods)
+
+        self.environment.assign(stmt.name, klass)
+
+
     def visit_StmtExpression(
         self,
         stmt: Stmt.StmtExpression,
@@ -229,7 +284,7 @@ class Interpreter(Expr.Visitor[Any], Stmt.Visitor[None]):
         self,
         stmt: Stmt.StmtFunction,
     ) -> None:
-        function = VeloxFunction(stmt, self.environment)
+        function = VeloxFunction(stmt, self.environment, False)
 
         self.environment.define(stmt.name.lexeme, function)
 

@@ -125,6 +125,13 @@ class Parser:
     ) -> Stmt:
         name = self.__consume(TokenType.IDENTIFIER, 'Expect class name.')
 
+        superclass = None
+
+        if self.__match(TokenType.LESS):
+            self.__consume(TokenType.IDENTIFIER, 'Expect superclass name.')
+
+            superclass = Expr.ExprVariable(self.__previous())
+
         self.__consume(TokenType.LEFT_BRACE, 'Expect \'{\' before class body.')
 
         methods = []
@@ -133,7 +140,7 @@ class Parser:
 
         self.__consume(TokenType.RIGHT_BRACE, 'Expect \'}\' after class body.')
 
-        return Stmt.StmtClass(name, methods)
+        return Stmt.StmtClass(name, superclass, methods)
 
     def __comparison(
         self,
@@ -418,6 +425,15 @@ class Parser:
                 'Expected \')\' after expression.'
             )
             return Expr.ExprGrouping(expr)
+
+        if self.__match(TokenType.SUPER):
+            keyword = self.__previous()
+
+            self.__consume(TokenType.DOT, 'Expect \'.\' after \'suer\'.')
+
+            method = self.__consume(TokenType.IDENTIFIER, 'Expect superclass method name.')
+
+            return Expr.ExprSuper(keyword, method)
 
         if self.__match(TokenType.THIS):
             return Expr.ExprThis(self.__previous())

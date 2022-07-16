@@ -187,6 +187,27 @@ class ExprSet(Expr):
         return visitor.visit_ExprSet(self)
 
 
+class ExprSuper(Expr):
+    # Lifecycle methods
+
+    def __init__(
+        self,
+        keyword: Token,
+        method: Token,
+    ) -> None:
+        self.keyword = keyword
+        self.method = method
+
+
+    # Public methods
+
+    def accept(
+        self,
+        visitor: ForwardRef('Visitor[T]'),
+    ) -> T:
+        return visitor.visit_ExprSuper(self)
+
+
 class ExprThis(Expr):
     # Lifecycle methods
 
@@ -301,6 +322,13 @@ class Visitor(Generic[T]):
     def visit_ExprSet(
         self,
         expr: ExprSet,
+    ) -> T:
+        pass
+
+
+    def visit_ExprSuper(
+        self,
+        expr: ExprSuper,
     ) -> T:
         pass
 

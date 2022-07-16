@@ -217,6 +217,24 @@ class Interpreter(Expr.Visitor[Any], Stmt.Visitor[None]):
         return value
 
 
+    def visit_ExprSuper(
+        self,
+        expr: Expr.ExprSuper,
+    ) -> Any:
+        distance = self.__locals.get(expr)
+
+        superclass = self.environment.get_at(distance, 'super')
+
+        object = self.environment.get_at(distance - 1, 'this')
+
+        method = superclass.find_method(expr.method.lexeme)
+
+        if method == None:
+            raise RuntimeError(expr.method, f'Undefined property \'{expr.method.lexeme}\'.')
+
+        return method.bind(object)
+
+
     def visit_ExprThis(
         self,
         expr: Expr.ExprThis,
@@ -258,7 +276,20 @@ class Interpreter(Expr.Visitor[Any], Stmt.Visitor[None]):
         self,
         stmt: Stmt.StmtClass,
     ) -> None:
+        superclass = None
+
+        if stmt.superclass != None:
+            superclass = self.__evaluate(stmt.superclass)
+
+            if not isinstance(superclass, VeloxClass):
+                raise RuntimeError(stmt.superclass.name, 'Superclass must be a class.')
+
         self.environment.define(stmt.name.lexeme, None)
+
+        if stmt.superclass != None:
+            self.environment = Environment(self.environment)
+
+            self.environment.define('super', superclass)
 
         methods = {}
         for method in stmt.methods:
@@ -268,7 +299,10 @@ class Interpreter(Expr.Visitor[Any], Stmt.Visitor[None]):
 
             methods[method.name.lexeme] = function
 
-        klass = VeloxClass(stmt.name.lexeme, methods)
+        klass = VeloxClass(stmt.name.lexeme, superclass, methods)
+
+        if stmt.superclass != None:
+            self.environment = self.environment.enclosing
 
         self.environment.assign(stmt.name, klass)
 

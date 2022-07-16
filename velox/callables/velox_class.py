@@ -11,9 +11,11 @@ class VeloxClass(VeloxCallable):
     def __init__(
         self,
         name: str,
+        superclass: ForwardRef('VeloxClass'),
         methods: dict[str, VeloxFunction]
     ) -> None:
         self.name = name
+        self.__superclass = superclass
         self.__methods = methods
 
 
@@ -58,3 +60,6 @@ class VeloxClass(VeloxCallable):
     ) -> VeloxFunction:
         if name in self.__methods:
             return self.__methods[name]
+
+        if self.__superclass != None:
+            return self.__superclass.find_method(name)

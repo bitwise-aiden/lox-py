@@ -1,6 +1,6 @@
 from typing import Any, ForwardRef, Generic, TypeVar
 
-from expr import Expr
+from expr import Expr, ExprVariable
 from token import Token
 
 
@@ -41,9 +41,11 @@ class StmtClass(Stmt):
     def __init__(
         self,
         name: Token,
+        superclass: ExprVariable,
         methods: list[Stmt],
     ) -> None:
         self.name = name
+        self.superclass = superclass
         self.methods = methods
 
 

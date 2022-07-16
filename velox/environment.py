@@ -11,7 +11,7 @@ class Environment:
         self,
         enclosing: ForwardRef('Environment') = None
     ) -> None:
-        self.__enclosing = enclosing
+        self.enclosing = enclosing
         self.__values = {}
 
 
@@ -26,8 +26,8 @@ class Environment:
             self.__values[name.lexeme] = value
             return
 
-        if self.__enclosing:
-            self.__enclosing.assign(name, value)
+        if self.enclosing:
+            self.enclosing.assign(name, value)
             return
 
         raise RuntimeError(name, f'Undefined variable \'{name.lexeme}\'.')
@@ -56,8 +56,8 @@ class Environment:
         if name.lexeme in self.__values:
             return self.__values[name.lexeme]
 
-        if self.__enclosing:
-            return self.__enclosing.get(name)
+        if self.enclosing:
+            return self.enclosing.get(name)
 
         raise RuntimeError(name, f'Undefined variable \'{name.lexeme}\'.')
 
@@ -79,6 +79,6 @@ class Environment:
         environment = self
 
         for _ in range(distance):
-            environment = environment.__enclosing
+            environment = environment.enclosing
 
         return environment

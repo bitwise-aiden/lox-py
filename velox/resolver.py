@@ -100,6 +100,19 @@ class Resolver(Expr.Visitor[None], Stmt.Visitor[None]):
         self.resolve(expr.object)
 
 
+    def visit_ExprSuper(
+        self,
+        expr: Expr.ExprSuper,
+    ) -> None:
+        if self.__current_class == ClassType.NONE:
+            ErrorReporter.error(expr.keyword, 'Can\'t use \'super\' outside of a class.')
+        elif self.__current_class != ClassType.SUBCLASS:
+            ErrorReporter.error(expr.keyword, 'Can\'t use \'super\' in a class with no superclass.')
+
+
+        self.__resolve_local(expr, expr.keyword)
+
+
     def visit_ExprThis(
         self,
         expr: Expr.ExprThis,
@@ -149,6 +162,18 @@ class Resolver(Expr.Visitor[None], Stmt.Visitor[None]):
 
         self.__define(stmt.name)
 
+        if stmt.superclass != None:
+            if stmt.name.lexeme == stmt.superclass.name.lexeme:
+                ErrorReporter.error(stmt.superclass.name, 'A class can\'t inherit from itself.')
+
+            self.__current_class = ClassType.SUBCLASS
+
+            self.resolve(stmt.superclass)
+
+            self.__begin_scope()
+
+            self.__scopes[-1]['super'] = True
+
         self.__begin_scope()
 
         self.__scopes[-1]['this'] = True
@@ -162,6 +187,9 @@ class Resolver(Expr.Visitor[None], Stmt.Visitor[None]):
             self.__resolve_function(method, declaration)
 
         self.__end_scope()
+
+        if stmt.superclass != None:
+            self.__end_scope()
 
         self.__current_class = enclosing_class
 

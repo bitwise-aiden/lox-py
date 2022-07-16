@@ -132,6 +132,7 @@ if __name__ == '__main__':
                 'Literal  : Any value',
                 'Logical  : Expr left, Token operator, Expr right',
                 'Set      : Expr object, Token name, Expr value',
+                'Super    : Token keyword, Token method',
                 'This     : Token keyword',
                 'Unary    : Token operator, Expr right',
                 'Variable : Token name',
@@ -144,7 +145,7 @@ if __name__ == '__main__':
         GenerateAst.define_ast(output_directory, 'Stmt',
             [
                 'Block      : list[Stmt] statements',
-                'Class      : Token name, list[Stmt] methods',
+                'Class      : Token name, ExprVariable superclass, list[Stmt] methods',
                 'Expression : Expr expression',
                 'Function   : Token name, list[Token] params, list[Stmt] body',
                 'If         : Expr condition, Stmt then_branch, Stmt else_branch',
@@ -154,7 +155,7 @@ if __name__ == '__main__':
                 'While      : Expr condition, Stmt body',
             ],
             [
-                'expr : Expr',
+                'expr : Expr, ExprVariable',
                 'token : Token',
             ],
         )
